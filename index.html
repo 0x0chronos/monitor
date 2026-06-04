@@ -1,610 +1,476 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BBRadar Monitor</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;700&family=Syne:wght@400;700;800&display=swap" rel="stylesheet">
-<style>
-  :root {
-    --bg:       #080b0f;
-    --surface:  #0d1117;
-    --border:   #1e2731;
-    --muted:    #4a5568;
-    --text:     #c9d1d9;
-    --bright:   #e6edf3;
-    --green:    #39d353;
-    --cyan:     #58a6ff;
-    --orange:   #f78166;
-    --purple:   #bc8cff;
-    --yellow:   #e3b341;
-    --mono:     'JetBrains Mono', monospace;
-    --display:  'Syne', sans-serif;
-  }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="900">
+  <title>BBRadar Monitor</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:        #080b10;
+      --surface:   #0d1117;
+      --border:    #1c2333;
+      --border-hi: #2d3a50;
+      --text:      #cdd9e5;
+      --muted:     #5c6b7a;
+      --accent:    #39d0b0;
+      --accent2:   #4fa3e0;
+      --warn:      #e3b341;
+      --danger:    #f47067;
+      --mono:      'IBM Plex Mono', monospace;
+      --sans:      'Syne', sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
 
-  body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--mono);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
+    /* ── SCANLINE overlay ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,.06) 2px,
+        rgba(0,0,0,.06) 4px
+      );
+      pointer-events: none;
+      z-index: 0;
+    }
 
-  /* Grid scanline overlay */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,255,100,0.015) 2px,
-      rgba(0,255,100,0.015) 4px
-    );
-    pointer-events: none;
-    z-index: 0;
-  }
+    /* ── LAYOUT ── */
+    .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px; position: relative; z-index: 1; }
 
-  .container {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 0 20px;
-    position: relative;
-    z-index: 1;
-  }
+    /* ── HEADER ── */
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+      gap: 16px;
+    }
+    .logo-block { display: flex; align-items: center; gap: 14px; }
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px;
+      flex-shrink: 0;
+    }
+    .logo-text h1 {
+      font-family: var(--sans);
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #fff;
+      line-height: 1.2;
+    }
+    .logo-text p {
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+    .status-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: .4; }
+    }
 
-  /* HEADER */
-  header {
-    padding: 40px 0 32px;
-    border-bottom: 1px solid var(--border);
-  }
+    /* ── STATS ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 32px;
+    }
+    .stat {
+      background: var(--surface);
+      padding: 22px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .stat-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .stat-value {
+      font-family: var(--sans);
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #fff;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .stat-value.accent { color: var(--accent); }
+    .stat-sub {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
 
-  .header-inner {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 16px;
-  }
+    /* ── SECTION ── */
+    .section { margin-bottom: 24px; }
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 9px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      display: block;
+      width: 20px;
+      height: 1px;
+      background: var(--accent);
+    }
+    .badge {
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: transparent;
+      border: 1px solid var(--border-hi);
+      color: var(--muted);
+    }
+    .badge.new { border-color: var(--accent); color: var(--accent); }
 
-  .logo {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
+    /* ── TABLE ── */
+    .table-wrap {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead tr {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 9px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 500;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,.025); }
+    td {
+      padding: 12px 16px;
+      vertical-align: middle;
+      color: var(--text);
+    }
+    .program-name {
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 13px;
+      color: #fff;
+    }
+    .program-name a {
+      color: inherit;
+      text-decoration: none;
+    }
+    .program-name a:hover { color: var(--accent); }
+    .plat-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--border-hi);
+      background: var(--surface);
+      white-space: nowrap;
+      color: var(--text);
+    }
+    .bounty-val {
+      color: var(--accent);
+      font-weight: 500;
+    }
+    .scope-tag {
+      display: inline-block;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 3px;
+      background: rgba(57,208,176,0.08);
+      color: var(--accent);
+      border: 1px solid rgba(57,208,176,0.2);
+      margin: 1px;
+    }
+    .date-val { color: var(--muted); font-size: 11px; }
 
-  .logo-icon {
-    width: 40px;
-    height: 40px;
-    border: 1.5px solid var(--green);
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    animation: pulse-border 3s ease-in-out infinite;
-  }
+    /* ── EMPTY STATE ── */
+    .empty {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 40px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty p { font-size: 11px; letter-spacing: 0.05em; }
+    .empty .big { font-size: 28px; margin-bottom: 10px; color: var(--border-hi); }
 
-  @keyframes pulse-border {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(57,211,83,0); }
-    50%       { box-shadow: 0 0 0 6px rgba(57,211,83,0.12); }
-  }
+    /* ── CHANNELS ── */
+    .channels {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .channel {
+      background: var(--surface);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .channel-name { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
+    .ch-ok  { color: var(--accent); font-size: 11px; }
+    .ch-off { color: var(--muted);  font-size: 11px; }
 
-  .logo-text h1 {
-    font-family: var(--display);
-    font-size: 22px;
-    font-weight: 800;
-    color: var(--bright);
-    letter-spacing: -0.5px;
-  }
+    /* ── FOOTER ── */
+    footer {
+      margin-top: 40px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .footer-left { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+    .footer-right a {
+      font-size: 10px;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.06em;
+    }
+    .footer-right a:hover { color: var(--accent); }
 
-  .logo-text p {
-    font-size: 11px;
-    color: var(--muted);
-    letter-spacing: 0.5px;
-    margin-top: 2px;
-  }
-
-  .status-bar {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 4px;
-  }
-
-  .status-dot {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 11px;
-    color: var(--green);
-  }
-
-  .dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    animation: blink 2s ease-in-out infinite;
-  }
-
-  @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50%       { opacity: 0.2; }
-  }
-
-  #last-check {
-    font-size: 10px;
-    color: var(--muted);
-  }
-
-  /* STATS ROW */
-  .stats {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1px;
-    background: var(--border);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    margin: 28px 0;
-  }
-
-  .stat {
-    background: var(--surface);
-    padding: 18px 20px;
-    text-align: center;
-  }
-
-  .stat-val {
-    font-family: var(--display);
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--bright);
-    line-height: 1;
-  }
-
-  .stat-val.green  { color: var(--green); }
-  .stat-val.cyan   { color: var(--cyan); }
-  .stat-val.yellow { color: var(--yellow); }
-
-  .stat-label {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-    margin-top: 6px;
-  }
-
-  /* SECTION HEADER */
-  .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
-  }
-
-  .section-title {
-    font-size: 11px;
-    letter-spacing: 2px;
-    text-transform: uppercase;
-    color: var(--muted);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-
-  .section-title::before {
-    content: '';
-    display: inline-block;
-    width: 16px;
-    height: 1px;
-    background: var(--muted);
-  }
-
-  .count-badge {
-    background: var(--border);
-    color: var(--muted);
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 20px;
-  }
-
-  /* PROGRAM CARDS */
-  #programs-list {
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
-  }
-
-  .program-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 16px 20px;
-    display: grid;
-    grid-template-columns: 1fr auto;
-    gap: 12px;
-    align-items: start;
-    transition: border-color 0.2s, background 0.2s;
-    animation: slide-in 0.4s ease backwards;
-    margin-bottom: 8px;
-    text-decoration: none;
-    color: inherit;
-    display: block;
-  }
-
-  .program-card:hover {
-    border-color: var(--muted);
-    background: #111820;
-  }
-
-  @keyframes slide-in {
-    from { opacity: 0; transform: translateY(8px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-
-  .card-top {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-  }
-
-  .program-name {
-    font-family: var(--display);
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--bright);
-    text-decoration: none;
-  }
-
-  .program-card:hover .program-name {
-    color: var(--cyan);
-  }
-
-  .platform-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    border: 1px solid;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
-  }
-
-  .new-badge {
-    font-size: 9px;
-    padding: 2px 7px;
-    border-radius: 4px;
-    background: rgba(57,211,83,0.1);
-    border: 1px solid rgba(57,211,83,0.3);
-    color: var(--green);
-    letter-spacing: 1px;
-    text-transform: uppercase;
-  }
-
-  .card-meta {
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-    font-size: 12px;
-    color: var(--muted);
-  }
-
-  .meta-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  .meta-item span { color: var(--text); }
-
-  .card-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 10px;
-  }
-
-  .tag {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: 4px;
-    background: rgba(255,255,255,0.04);
-    border: 1px solid var(--border);
-    color: var(--muted);
-  }
-
-  .bounty-val {
-    font-size: 13px;
-    font-weight: 500;
-  }
-
-  .bounty-val.high   { color: var(--green); }
-  .bounty-val.medium { color: var(--yellow); }
-  .bounty-val.low    { color: var(--muted); }
-
-  /* EMPTY STATE */
-  .empty {
-    text-align: center;
-    padding: 60px 20px;
-    color: var(--muted);
-  }
-
-  .empty-icon { font-size: 36px; margin-bottom: 16px; opacity: 0.4; }
-  .empty h3   { font-size: 14px; color: var(--text); margin-bottom: 8px; }
-  .empty p    { font-size: 12px; line-height: 1.6; }
-
-  /* LOADING */
-  .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 60px;
-    gap: 8px;
-    color: var(--muted);
-    font-size: 12px;
-  }
-
-  .spinner {
-    width: 14px; height: 14px;
-    border: 1.5px solid var(--border);
-    border-top-color: var(--green);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* FOOTER */
-  footer {
-    border-top: 1px solid var(--border);
-    margin-top: 48px;
-    padding: 24px 0;
-    text-align: center;
-    font-size: 11px;
-    color: var(--muted);
-    line-height: 2;
-  }
-
-  footer a { color: var(--muted); text-decoration: none; }
-  footer a:hover { color: var(--text); }
-
-  /* REFRESH INDICATOR */
-  #refresh-bar {
-    height: 2px;
-    background: var(--border);
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    z-index: 100;
-  }
-
-  #refresh-progress {
-    height: 100%;
-    background: linear-gradient(90deg, var(--green), var(--cyan));
-    width: 0%;
-    transition: width linear;
-  }
-
-  @media (max-width: 600px) {
-    .stats { grid-template-columns: repeat(3, 1fr); }
-    .stat-val { font-size: 22px; }
-    .card-meta { gap: 12px; }
-    .header-inner { flex-direction: column; }
-    .status-bar { align-items: flex-start; }
-  }
-</style>
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: 1fr; }
+      header { flex-direction: column; }
+      .stat-value { font-size: 1.8rem; }
+      th:nth-child(4), td:nth-child(4) { display: none; }
+    }
+  </style>
 </head>
 <body>
+<div class="wrap">
 
-<div id="refresh-bar"><div id="refresh-progress"></div></div>
-
-<div class="container">
-
+  <!-- HEADER -->
   <header>
-    <div class="header-inner">
-      <div class="logo">
-        <div class="logo-icon">🎯</div>
-        <div class="logo-text">
-          <h1>BBRadar Monitor</h1>
-          <p>NOVOS PROGRAMAS DE BUG BOUNTY — TEMPO REAL</p>
-        </div>
+    <div class="logo-block">
+      <div class="logo-icon">🎯</div>
+      <div class="logo-text">
+        <h1>BBRadar Monitor</h1>
+        <p>Novos programas de bug bounty — tempo real</p>
       </div>
-      <div class="status-bar">
-        <div class="status-dot">
-          <div class="dot"></div>
-          ATIVO — checando a cada 10min
-        </div>
-        <div id="last-check">carregando...</div>
-      </div>
+    </div>
+    <div class="status-pill">
+      <span class="dot"></span>
+      ATIVO — checando a cada 15min
     </div>
   </header>
 
+  <!-- STATS -->
   <div class="stats">
     <div class="stat">
-      <div class="stat-val green" id="stat-new">—</div>
-      <div class="stat-label">Novos detectados</div>
+      <span class="stat-label">Novos Detectados</span>
+      <span class="stat-value accent" id="stat-new">—</span>
+      <span class="stat-sub">nesta execução</span>
     </div>
     <div class="stat">
-      <div class="stat-val cyan" id="stat-total">—</div>
-      <div class="stat-label">Total catalogados</div>
+      <span class="stat-label">Total Catalogados</span>
+      <span class="stat-value" id="stat-total">—</span>
+      <span class="stat-sub">programas conhecidos</span>
     </div>
     <div class="stat">
-      <div class="stat-val yellow" id="stat-runs">—</div>
-      <div class="stat-label">Execuções</div>
+      <span class="stat-label">Execuções</span>
+      <span class="stat-value" id="stat-runs">—</span>
+      <span class="stat-sub" id="stat-date">aguardando GitHub Actions...</span>
     </div>
   </div>
 
-  <div class="section-header">
-    <div class="section-title">Programas Novos</div>
-    <div class="count-badge" id="count-badge">0 programas</div>
+  <!-- PROGRAMAS NOVOS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Programas Novos</span>
+      <span class="badge" id="prog-count">0 programas</span>
+    </div>
+    <div id="prog-container">
+      <div class="empty">
+        <div class="big">◌</div>
+        <p>Aguardando primeira execução do GitHub Actions.</p>
+      </div>
+    </div>
   </div>
 
-  <div id="programs-list">
-    <div class="loading"><div class="spinner"></div> buscando dados...</div>
+  <!-- CANAIS -->
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">Canais de Notificação</span>
+    </div>
+    <div class="channels">
+      <div class="channel">
+        <span class="channel-name">Discord</span>
+        <span class="ch-ok">✓ ativo</span>
+      </div>
+      <div class="channel">
+        <span class="channel-name">Telegram</span>
+        <span class="ch-ok">✓ ativo</span>
+      </div>
+      <div class="channel">
+        <span class="channel-name">WhatsApp</span>
+        <span class="ch-off" id="wa-status">— pendente</span>
+      </div>
+    </div>
   </div>
 
+  <!-- FOOTER -->
   <footer>
-    <div>atualiza automaticamente a cada 60s &nbsp;·&nbsp; <a href="https://bbradar.io" target="_blank">bbradar.io</a></div>
-    <div style="margin-top:4px;font-size:10px;opacity:0.5">chronos / bbradar-monitor</div>
+    <span class="footer-left">atualiza automaticamente a cada 60s &nbsp;·&nbsp; bbradar.io</span>
+    <div class="footer-right">
+      <a href="https://github.com/chronos/bbradar-monitor" target="_blank">chronos / bbradar-monitor</a>
+    </div>
   </footer>
 
 </div>
 
 <script>
-// ─── PLATAFORMA → COR ────────────────────────────────────────────────────────
-const PLATFORM_COLORS = {
-  "hackerone":        { bg:"rgba(44,62,80,0.3)",  border:"#2C3E50", text:"#7fb3d3" },
-  "bugcrowd":         { bg:"rgba(231,126,34,0.15)", border:"#E67E22", text:"#f0a45a" },
-  "intigriti":        { bg:"rgba(155,89,182,0.2)", border:"#9B59B6", text:"#c39bd3" },
-  "yeswehack":        { bg:"rgba(39,174,96,0.2)",  border:"#27AE60", text:"#58d68d" },
-  "immunefi":         { bg:"rgba(52,152,219,0.2)", border:"#3498DB", text:"#7fb3e0" },
-  "code4rena":        { bg:"rgba(231,76,60,0.2)",  border:"#E74C3C", text:"#ec7063" },
-  "hackenproof":      { bg:"rgba(26,188,156,0.2)", border:"#1ABC9C", text:"#48c9b0" },
-  "cantina":          { bg:"rgba(243,156,18,0.2)", border:"#F39C12", text:"#f5b041" },
-  "compass security": { bg:"rgba(46,204,113,0.2)", border:"#2ECC71", text:"#58d68d" },
-  "standoff365":      { bg:"rgba(192,57,43,0.2)",  border:"#C0392B", text:"#e74c3c" },
-  "bugrap":           { bg:"rgba(142,68,173,0.2)", border:"#8E44AD", text:"#af7ac5" },
-  "issuehunt":        { bg:"rgba(22,160,133,0.2)", border:"#16A085", text:"#1abc9c" },
-  "certik":           { bg:"rgba(41,128,185,0.2)", border:"#2980B9", text:"#5dade2" },
-};
+  // Lê state.json gerado pelo GitHub Actions e popula a página
+  const PLAT_EMOJI = {
+    'hackerone':'🟢','bugcrowd':'🟠','intigriti':'🟣','yeswehack':'🟡',
+    'immunefi':'🔵','code4rena':'🔴','hackenproof':'🩵','cantina':'🟤',
+    'compass security':'🟩','standoff365':'🔴','default':'⚪'
+  };
+  function platEmoji(p){ return PLAT_EMOJI[p.toLowerCase()] || PLAT_EMOJI.default; }
 
-const DEFAULT_COLOR = { bg:"rgba(0,180,216,0.1)", border:"#00B4D8", text:"#58c9e8" };
+  async function loadData(){
+    try {
+      const r = await fetch('state.json?t=' + Date.now());
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const s = await r.json();
 
-function getPlatformColor(plat) {
-  return PLATFORM_COLORS[plat.toLowerCase()] || DEFAULT_COLOR;
-}
+      // Stats
+      document.getElementById('stat-new').textContent   = (s.last_new ?? 0);
+      document.getElementById('stat-total').textContent = (s.total ?? 0).toLocaleString();
+      document.getElementById('stat-runs').textContent  = (s.runs  ?? 0);
 
-// ─── BOUNTY ──────────────────────────────────────────────────────────────────
-function bountyClass(str, maxVal) {
-  if (!str || str === "VDP / sem bounty") return "low";
-  if (maxVal >= 50000)  return "high";
-  if (maxVal >= 5000)   return "medium";
-  return "low";
-}
+      if(s.last_check){
+        const d = new Date(s.last_check + 'Z');
+        document.getElementById('stat-date').textContent =
+          d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',
+                                    hour:'2-digit',minute:'2-digit'}) + ' UTC';
+      }
 
-// ─── TEMPO RELATIVO ───────────────────────────────────────────────────────────
-function timeAgo(iso) {
-  if (!iso) return "nunca";
-  const diff = (Date.now() - new Date(iso)) / 1000;
-  if (diff < 60)    return "agora mesmo";
-  if (diff < 3600)  return `${Math.floor(diff/60)}min atrás`;
-  if (diff < 86400) return `${Math.floor(diff/3600)}h atrás`;
-  return `${Math.floor(diff/86400)}d atrás`;
-}
+      // Programas novos
+      const progs = s.last_new_programs || [];
+      const badge = document.getElementById('prog-count');
+      badge.textContent = progs.length + ' programa' + (progs.length===1?'':'s');
+      if(progs.length > 0) badge.className = 'badge new';
 
-// ─── RENDER ───────────────────────────────────────────────────────────────────
-function renderCard(p, idx) {
-  const c      = getPlatformColor(p.platform || "");
-  const bClass = bountyClass(p.bounty_str, p.bounty_max || 0);
-  const tags   = (p.scope_tags || []).slice(0, 6);
-  const isNew  = idx < 5;
-
-  const tagsHtml = tags.map(t =>
-    `<span class="tag">${t}</span>`
-  ).join('');
-
-  const foundAgo = p.date_found ? timeAgo(p.date_found) : "";
-
-  return `
-  <a class="program-card" href="${p.link || '#'}" target="_blank" rel="noopener"
-     style="animation-delay: ${idx * 0.04}s">
-    <div class="card-top">
-      <span class="program-name">${escHtml(p.name || "Sem nome")}</span>
-      <span class="platform-badge"
-        style="background:${c.bg};border-color:${c.border};color:${c.text}">
-        ${escHtml(p.platform || "?")}
-      </span>
-      ${isNew ? '<span class="new-badge">NEW</span>' : ''}
-    </div>
-    <div class="card-meta">
-      <div class="meta-item">📅 <span>${p.date_display || p.date_launched || "?"}</span></div>
-      <div class="meta-item">💰 <span class="bounty-val ${bClass}">${escHtml(p.bounty_str || "?")}</span></div>
-      ${foundAgo ? `<div class="meta-item" style="margin-left:auto;color:var(--muted)">detectado ${foundAgo}</div>` : ''}
-    </div>
-    ${tagsHtml ? `<div class="card-tags">${tagsHtml}</div>` : ''}
-  </a>`;
-}
-
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ─── FETCH + UPDATE ──────────────────────────────────────────────────────────
-async function load() {
-  try {
-    const r    = await fetch(`./programs.json?t=${Date.now()}`);
-    const data = await r.json();
-
-    // Stats
-    document.getElementById('stat-new').textContent   = data.recent_new?.length || 0;
-    document.getElementById('stat-total').textContent  = data.total_seen || 0;
-    document.getElementById('stat-runs').textContent   = data.total_runs || 0;
-    document.getElementById('count-badge').textContent =
-      `${data.recent_new?.length || 0} programa(s)`;
-
-    // Last check
-    document.getElementById('last-check').textContent =
-      data.last_updated
-        ? `última checagem ${timeAgo(data.last_updated)}`
-        : 'aguardando primeira execução...';
-
-    // Programs
-    const list = document.getElementById('programs-list');
-    const items = data.recent_new || [];
-
-    if (items.length === 0) {
-      list.innerHTML = `
-        <div class="empty">
-          <div class="empty-icon">🔍</div>
-          <h3>Nenhum programa novo ainda</h3>
-          <p>O monitor está ativo.<br>
-             Quando um programa novo aparecer no bbradar.io,<br>
-             ele vai aparecer aqui e você será notificado.</p>
+      const container = document.getElementById('prog-container');
+      if(progs.length === 0){
+        container.innerHTML = `<div class="empty">
+          <div class="big">◌</div>
+          <p>Nenhum programa novo nesta execução.<br>Tudo em dia.</p>
         </div>`;
-    } else {
-      list.innerHTML = items.map((p, i) => renderCard(p, i)).join('');
+      } else {
+        const rows = progs.map(p => {
+          const tags = (p.scope_tags||[]).slice(0,4).map(t =>
+            `<span class="scope-tag">${t}</span>`).join('');
+          return `<tr>
+            <td class="program-name"><a href="${p.link||'#'}" target="_blank">${p.name}</a></td>
+            <td><span class="plat-chip">${platEmoji(p.platform)} ${p.platform}</span></td>
+            <td class="date-val">${p.date_display||'—'}</td>
+            <td class="bounty-val">${p.bounty_str||'—'}</td>
+            <td>${tags||'<span class="date-val">—</span>'}</td>
+          </tr>`;
+        }).join('');
+        container.innerHTML = `<div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th>Programa</th><th>Plataforma</th><th>Data</th><th>Bounty</th><th>Scope</th>
+            </tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
+      }
+
+    } catch(e) {
+      // state.json ainda não existe — aguardando primeira execução
+      console.log('state.json não disponível ainda:', e.message);
     }
-  } catch(e) {
-    document.getElementById('programs-list').innerHTML = `
-      <div class="empty">
-        <div class="empty-icon">⚠️</div>
-        <h3>Erro ao carregar dados</h3>
-        <p>${escHtml(e.message)}<br>
-           O programs.json pode ainda não ter sido gerado.<br>
-           Aguarde a primeira execução do GitHub Action.</p>
-      </div>`;
   }
-}
 
-// ─── REFRESH BAR (visual) ────────────────────────────────────────────────────
-const REFRESH_INTERVAL = 60000; // 60s
-let   refreshStart     = Date.now();
-
-function updateProgressBar() {
-  const elapsed  = Date.now() - refreshStart;
-  const pct      = Math.min((elapsed / REFRESH_INTERVAL) * 100, 100);
-  document.getElementById('refresh-progress').style.width = pct + '%';
-}
-
-setInterval(updateProgressBar, 500);
-
-setInterval(async () => {
-  refreshStart = Date.now();
-  document.getElementById('refresh-progress').style.transition = 'none';
-  document.getElementById('refresh-progress').style.width = '0%';
-  await load();
-}, REFRESH_INTERVAL);
-
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-load();
+  loadData();
+  setInterval(loadData, 60000);
 </script>
 </body>
 </html>
