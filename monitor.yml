@@ -1,0 +1,41 @@
+name: BBRadar Monitor
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependências
+        run: pip install requests --quiet
+
+      - name: Rodar monitor
+        run: python monitor.py
+
+      - name: Commitar state.json
+        run: |
+          git config user.name  "BBRadar Bot"
+          git config user.email "bbradar-bot@noreply"
+          git add state.json
+          if git diff --staged --quiet; then
+            echo "state.json sem mudanças."
+          else
+            git commit -m "chore: update state [skip ci]"
+            git push
+          fi
