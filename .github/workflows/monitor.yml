@@ -40,5 +40,6 @@ jobs:
             echo "Sem mudanças."
           else
             git commit -m "chore: update state [skip ci]"
-            git push
+            git pull --rebase origin main
+            git push origin main
           fi
