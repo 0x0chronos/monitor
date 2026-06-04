@@ -24,7 +24,7 @@ from urllib3.util.retry import Retry
 DISCORD_WEBHOOK  = "https://discord.com/api/webhooks/1486835658050764870/6khmM7CevN0CIrnI8Rfeei32n0hYXn8pkrzgXsr_23k7gKC-AT7YpDNyHbDFLJhUzRLu"
 TELEGRAM_TOKEN   = "8655564407:AAFq9jaEoLdV6_b_Jdl14ZcRJ9swRRqxNng"
 TELEGRAM_CHAT_ID = "1640178171"
-CALLMEBOT_PHONE  = ""          # ex: "5513999999999"
+CALLMEBOT_PHONE  = "5513996222130"          # ex: "5513999999999"
 CALLMEBOT_KEY    = "2860591"
 
 # ═══════════════════════════════════════════════════════════════
