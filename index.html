@@ -3,474 +3,531 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="900">
   <title>BBRadar Monitor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg:        #080b10;
-      --surface:   #0d1117;
-      --border:    #1c2333;
-      --border-hi: #2d3a50;
-      --text:      #cdd9e5;
-      --muted:     #5c6b7a;
-      --accent:    #39d0b0;
-      --accent2:   #4fa3e0;
-      --warn:      #e3b341;
-      --danger:    #f47067;
-      --mono:      'IBM Plex Mono', monospace;
-      --sans:      'Syne', sans-serif;
+      --bg:       #13151a;
+      --surface:  #1a1d24;
+      --surface2: #1f2330;
+      --border:   #2a2d38;
+      --border2:  #33374a;
+      --text:     #e2e4eb;
+      --muted:    #6b7080;
+      --muted2:   #9097ab;
+      --green:    #00c48c;
+      --green-bg: rgba(0,196,140,.08);
+      --blue:     #4d9ef7;
+      --orange:   #f5a623;
+      --red:      #f04e4e;
+      --new:      #3dd68c;
+      --new-bg:   rgba(61,214,140,.1);
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+    html { font-size: 14px; }
     body {
+      font-family: 'Inter', system-ui, sans-serif;
       background: var(--bg);
       color: var(--text);
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 1.6;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
     }
+    a { color: inherit; text-decoration: none; }
 
-    /* ── SCANLINE overlay ── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent,
-        transparent 2px,
-        rgba(0,0,0,.06) 2px,
-        rgba(0,0,0,.06) 4px
-      );
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* ── LAYOUT ── */
-    .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 24px; position: relative; z-index: 1; }
-
-    /* ── HEADER ── */
-    header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      padding-bottom: 32px;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 32px;
-      gap: 16px;
-    }
-    .logo-block { display: flex; align-items: center; gap: 14px; }
-    .logo-icon {
-      width: 44px; height: 44px;
+    /* ── TOPBAR ── */
+    .topbar {
       background: var(--surface);
-      border: 1px solid var(--border-hi);
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px;
-      flex-shrink: 0;
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
     }
-    .logo-text h1 {
-      font-family: var(--sans);
-      font-size: 1.25rem;
-      font-weight: 800;
+    .topbar-left  { display: flex; align-items: center; gap: 12px; }
+    .topbar-right { display: flex; align-items: center; gap: 16px; }
+    .brand {
+      font-size: 1.1rem;
+      font-weight: 700;
       letter-spacing: -0.02em;
       color: #fff;
-      line-height: 1.2;
     }
-    .logo-text p {
-      font-size: 10px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-    .status-pill {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 6px 12px;
-      font-size: 11px;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      flex-shrink: 0;
+    .brand span { color: var(--green); }
+    .status-dot {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11px; font-weight: 500;
+      color: var(--muted2);
+      letter-spacing: 0.04em;
     }
     .dot {
-      width: 7px; height: 7px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 6px var(--accent);
-      animation: pulse 2s ease-in-out infinite;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+      animation: blink 2.5s ease-in-out infinite;
     }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: .4; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .nav-link {
+      font-size: 12px; font-weight: 500; color: var(--muted2);
+      padding: 6px 12px; border-radius: 6px;
+      transition: all .15s;
     }
+    .nav-link:hover { color: var(--text); background: var(--surface2); }
 
-    /* ── STATS ── */
+    /* ── WRAP ── */
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 28px 24px; }
+
+    /* ── PAGE HEADER ── */
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 {
+      font-size: 1.5rem; font-weight: 700;
+      letter-spacing: -0.025em; color: #fff;
+      margin-bottom: 6px;
+    }
+    .page-header p { font-size: 13px; color: var(--muted2); line-height: 1.5; }
+
+    /* ── STATS ROW ── */
     .stats {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1px;
-      background: var(--border);
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 32px;
+      padding: 16px 18px;
     }
-    .stat {
+    .stat-label { font-size: 11px; font-weight: 500; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 8px; }
+    .stat-value { font-size: 1.6rem; font-weight: 700; color: #fff; letter-spacing: -0.03em; line-height: 1; }
+    .stat-value.green { color: var(--green); }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+    /* ── TOOLBAR ── */
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px; gap: 12px; flex-wrap: wrap;
+    }
+    .showing { font-size: 13px; color: var(--muted2); }
+    .showing b { color: var(--text); }
+    .filter-tabs { display: flex; gap: 6px; }
+    .tab {
+      font-size: 11px; font-weight: 600; padding: 4px 10px;
+      border-radius: 20px; border: 1px solid var(--border2);
+      color: var(--muted2); cursor: pointer;
+      background: transparent; transition: all .15s; letter-spacing: 0.03em;
+    }
+    .tab:hover { border-color: var(--green); color: var(--green); }
+    .tab.active { background: var(--green); border-color: var(--green); color: #000; font-weight: 700; }
+
+    /* ── PROGRAM CARD ── */
+    .programs { display: flex; flex-direction: column; }
+    .program-card {
       background: var(--surface);
-      padding: 22px 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-    }
-    .stat-label {
-      font-size: 9px;
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-    .stat-value {
-      font-family: var(--sans);
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: #fff;
-      line-height: 1;
-      letter-spacing: -0.03em;
-    }
-    .stat-value.accent { color: var(--accent); }
-    .stat-sub {
-      font-size: 10px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    /* ── SECTION ── */
-    .section { margin-bottom: 24px; }
-    .section-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 12px;
-    }
-    .section-title {
-      font-size: 9px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: var(--muted);
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .section-title::before {
-      content: '';
-      display: block;
-      width: 20px;
-      height: 1px;
-      background: var(--accent);
-    }
-    .badge {
-      font-size: 10px;
-      font-family: var(--mono);
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: transparent;
-      border: 1px solid var(--border-hi);
-      color: var(--muted);
-    }
-    .badge.new { border-color: var(--accent); color: var(--accent); }
-
-    /* ── TABLE ── */
-    .table-wrap {
       border: 1px solid var(--border);
       border-radius: 10px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow: hidden;
+      transition: border-color .15s;
+      cursor: pointer;
+    }
+    .program-card:hover { border-color: var(--border2); }
+    .program-card.is-new { border-color: rgba(61,214,140,.3); }
+    .program-card.is-new:hover { border-color: var(--new); }
+
+    /* Date col */
+    .col-date {
+      padding: 16px 14px;
+      min-width: 76px;
+      text-align: center;
+      border-right: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .date-day   { font-size: 18px; font-weight: 700; color: #fff; line-height: 1; }
+    .date-month { font-size: 10px; color: var(--muted); letter-spacing: 0.06em; margin-top: 2px; }
+
+    /* Vote col */
+    .col-vote {
+      padding: 16px 10px;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+    }
+    .vote-btn {
+      width: 22px; height: 22px;
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: 4px; display: flex; align-items: center; justify-content: center;
+      cursor: default; color: var(--muted);
+    }
+    .vote-count { font-size: 12px; font-weight: 600; color: var(--muted2); line-height: 1; }
+
+    /* Logo col */
+    .col-logo {
+      padding: 0 14px;
+      flex-shrink: 0;
+    }
+    .logo-circle {
+      width: 38px; height: 38px; border-radius: 50%;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
       overflow: hidden;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
+    .logo-circle img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+    /* Info col */
+    .col-info { flex: 1; padding: 14px 8px; min-width: 0; }
+    .prog-name-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+    .prog-name {
+      font-size: 14px; font-weight: 600; color: #fff;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    thead tr {
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
+    .badge-new {
+      font-size: 9px; font-weight: 700; letter-spacing: 0.08em;
+      padding: 2px 6px; border-radius: 4px;
+      background: var(--new-bg); color: var(--new);
+      border: 1px solid rgba(61,214,140,.3);
+      white-space: nowrap; text-transform: uppercase; flex-shrink: 0;
     }
-    th {
-      padding: 10px 16px;
-      text-align: left;
-      font-size: 9px;
-      letter-spacing: 0.14em;
-      text-transform: uppercase;
-      color: var(--muted);
-      font-weight: 500;
-    }
-    tbody tr {
-      border-bottom: 1px solid var(--border);
-      transition: background 0.15s;
-    }
-    tbody tr:last-child { border-bottom: none; }
-    tbody tr:hover { background: rgba(255,255,255,.025); }
-    td {
-      padding: 12px 16px;
-      vertical-align: middle;
-      color: var(--text);
-    }
-    .program-name {
-      font-family: var(--sans);
-      font-weight: 600;
-      font-size: 13px;
-      color: #fff;
-    }
-    .program-name a {
-      color: inherit;
-      text-decoration: none;
-    }
-    .program-name a:hover { color: var(--accent); }
-    .plat-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 10px;
-      padding: 2px 7px;
-      border-radius: 4px;
-      border: 1px solid var(--border-hi);
-      background: var(--surface);
+    .prog-plat { font-size: 11px; color: var(--muted2); }
+
+    /* Tags col */
+    .col-tags { padding: 14px 8px; display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; flex: 1; }
+    .scope-chip {
+      font-size: 11px; padding: 2px 8px; border-radius: 5px;
+      background: var(--surface2); color: var(--muted2);
+      border: 1px solid var(--border2);
       white-space: nowrap;
-      color: var(--text);
     }
-    .bounty-val {
-      color: var(--accent);
-      font-weight: 500;
+    .more-chip { color: var(--muted); font-style: italic; font-size: 11px; }
+
+    /* Bounty col */
+    .col-bounty {
+      padding: 14px 16px;
+      min-width: 130px;
+      text-align: right;
+      flex-shrink: 0;
     }
-    .scope-tag {
+    .bounty-amt { font-size: 13px; font-weight: 600; color: var(--green); white-space: nowrap; }
+    .bounty-vdp { font-size: 12px; color: var(--muted); }
+
+    /* Action col */
+    .col-action { padding: 14px 14px 14px 0; flex-shrink: 0; }
+    .btn-details {
+      font-size: 12px; font-weight: 600; padding: 6px 14px;
+      border-radius: 6px; border: 1px solid var(--border2);
+      color: var(--text); background: transparent;
+      cursor: pointer; transition: all .15s; white-space: nowrap;
       display: inline-block;
-      font-size: 10px;
-      padding: 1px 5px;
-      border-radius: 3px;
-      background: rgba(57,208,176,0.08);
-      color: var(--accent);
-      border: 1px solid rgba(57,208,176,0.2);
-      margin: 1px;
     }
-    .date-val { color: var(--muted); font-size: 11px; }
+    .btn-details:hover { border-color: var(--green); color: var(--green); }
 
     /* ── EMPTY STATE ── */
-    .empty {
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 40px;
-      text-align: center;
-      color: var(--muted);
-    }
-    .empty p { font-size: 11px; letter-spacing: 0.05em; }
-    .empty .big { font-size: 28px; margin-bottom: 10px; color: var(--border-hi); }
-
-    /* ── CHANNELS ── */
-    .channels {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 1px;
-      background: var(--border);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-    }
-    .channel {
+    .empty-state {
       background: var(--surface);
-      padding: 14px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 48px;
+      text-align: center;
+      color: var(--muted2);
     }
-    .channel-name { font-size: 11px; color: var(--muted); letter-spacing: 0.06em; text-transform: uppercase; }
-    .ch-ok  { color: var(--accent); font-size: 11px; }
-    .ch-off { color: var(--muted);  font-size: 11px; }
+    .empty-state .icon { font-size: 32px; margin-bottom: 12px; opacity: .4; }
+    .empty-state p { font-size: 13px; }
+    .empty-state .loading {
+      display: inline-block; width: 28px; height: 28px;
+      border: 2px solid var(--border2);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+      margin-bottom: 12px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── CHANNELS BAR ── */
+    .channels-section { margin-top: 28px; }
+    .section-label {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      letter-spacing: 0.1em; text-transform: uppercase;
+      margin-bottom: 10px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .channels {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .channel-pill {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px;
+    }
+    .channel-pill .ch-name { color: var(--muted2); font-weight: 500; }
+    .ch-ok  { color: var(--green); font-weight: 600; }
+    .ch-off { color: var(--muted); }
 
     /* ── FOOTER ── */
     footer {
-      margin-top: 40px;
+      margin-top: 32px;
       padding-top: 20px;
       border-top: 1px solid var(--border);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 8px;
     }
-    .footer-left { font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
-    .footer-right a {
-      font-size: 10px;
-      color: var(--muted);
-      text-decoration: none;
-      letter-spacing: 0.06em;
-    }
-    .footer-right a:hover { color: var(--accent); }
+    footer span, footer a { font-size: 11px; color: var(--muted); }
+    footer a:hover { color: var(--text); }
 
-    @media (max-width: 640px) {
-      .stats { grid-template-columns: 1fr; }
-      header { flex-direction: column; }
-      .stat-value { font-size: 1.8rem; }
-      th:nth-child(4), td:nth-child(4) { display: none; }
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      .stats { grid-template-columns: repeat(2,1fr); }
+      .col-vote, .col-tags { display: none; }
+      .col-date { min-width: 60px; padding: 12px 10px; }
+      .topbar { padding: 0 16px; }
+      .wrap { padding: 20px 16px; }
     }
   </style>
 </head>
 <body>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="topbar-left">
+    <span style="font-size:20px">🎯</span>
+    <span class="brand">BBRadar <span>Monitor</span></span>
+  </div>
+  <div class="topbar-right">
+    <div class="status-dot">
+      <span class="dot"></span>
+      <span id="status-text">ATIVO — A CADA 15MIN</span>
+    </div>
+    <a class="nav-link" href="https://bbradar.io" target="_blank">bbradar.io ↗</a>
+  </div>
+</nav>
+
+<!-- CONTENT -->
 <div class="wrap">
 
-  <!-- HEADER -->
-  <header>
-    <div class="logo-block">
-      <div class="logo-icon">🎯</div>
-      <div class="logo-text">
-        <h1>BBRadar Monitor</h1>
-        <p>Novos programas de bug bounty — tempo real</p>
-      </div>
-    </div>
-    <div class="status-pill">
-      <span class="dot"></span>
-      ATIVO — checando a cada 15min
-    </div>
-  </header>
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+    <h1>Novos Programas de Bug Bounty</h1>
+    <p>Monitor automático de novos programas em bbradar.io — notifica via Discord, Telegram e WhatsApp em tempo real.</p>
+  </div>
 
   <!-- STATS -->
   <div class="stats">
-    <div class="stat">
-      <span class="stat-label">Novos Detectados</span>
-      <span class="stat-value accent" id="stat-new">—</span>
-      <span class="stat-sub">nesta execução</span>
+    <div class="stat-card">
+      <div class="stat-label">Novos Detectados</div>
+      <div class="stat-value green" id="s-new">—</div>
+      <div class="stat-sub">nesta execução</div>
     </div>
-    <div class="stat">
-      <span class="stat-label">Total Catalogados</span>
-      <span class="stat-value" id="stat-total">—</span>
-      <span class="stat-sub">programas conhecidos</span>
+    <div class="stat-card">
+      <div class="stat-label">Total Catalogados</div>
+      <div class="stat-value" id="s-total">—</div>
+      <div class="stat-sub">programas conhecidos</div>
     </div>
-    <div class="stat">
-      <span class="stat-label">Execuções</span>
-      <span class="stat-value" id="stat-runs">—</span>
-      <span class="stat-sub" id="stat-date">aguardando GitHub Actions...</span>
+    <div class="stat-card">
+      <div class="stat-label">Execuções</div>
+      <div class="stat-value" id="s-runs">—</div>
+      <div class="stat-sub">GitHub Actions</div>
     </div>
-  </div>
-
-  <!-- PROGRAMAS NOVOS -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-title">Programas Novos</span>
-      <span class="badge" id="prog-count">0 programas</span>
-    </div>
-    <div id="prog-container">
-      <div class="empty">
-        <div class="big">◌</div>
-        <p>Aguardando primeira execução do GitHub Actions.</p>
-      </div>
+    <div class="stat-card">
+      <div class="stat-label">Última Checagem</div>
+      <div class="stat-value" id="s-date" style="font-size:1rem;line-height:1.3">—</div>
+      <div class="stat-sub">UTC</div>
     </div>
   </div>
 
-  <!-- CANAIS -->
-  <div class="section">
-    <div class="section-header">
-      <span class="section-title">Canais de Notificação</span>
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="showing">
+      Mostrando <b id="prog-count">—</b> programa(s) novo(s) detectado(s)
     </div>
+    <div class="filter-tabs">
+      <button class="tab active" onclick="setTab(this,'all')">Todos</button>
+      <button class="tab" onclick="setTab(this,'web')">Web</button>
+      <button class="tab" onclick="setTab(this,'mobile')">Mobile</button>
+      <button class="tab" onclick="setTab(this,'smart contract')">Smart Contract</button>
+    </div>
+  </div>
+
+  <!-- PROGRAMS LIST -->
+  <div class="programs" id="programs-list">
+    <div class="empty-state">
+      <div class="loading"></div>
+      <p>Carregando dados do GitHub Actions...</p>
+    </div>
+  </div>
+
+  <!-- CHANNELS -->
+  <div class="channels-section">
+    <div class="section-label">Canais de Notificação</div>
     <div class="channels">
-      <div class="channel">
-        <span class="channel-name">Discord</span>
+      <div class="channel-pill">
+        <span>💬</span>
+        <span class="ch-name">Discord</span>
         <span class="ch-ok">✓ ativo</span>
       </div>
-      <div class="channel">
-        <span class="channel-name">Telegram</span>
+      <div class="channel-pill">
+        <span>✈️</span>
+        <span class="ch-name">Telegram</span>
         <span class="ch-ok">✓ ativo</span>
       </div>
-      <div class="channel">
-        <span class="channel-name">WhatsApp</span>
-        <span class="ch-off" id="wa-status">— pendente</span>
+      <div class="channel-pill">
+        <span>📱</span>
+        <span class="ch-name">WhatsApp</span>
+        <span class="ch-off" id="wa-ch">— pendente</span>
       </div>
     </div>
   </div>
 
   <!-- FOOTER -->
   <footer>
-    <span class="footer-left">atualiza automaticamente a cada 60s &nbsp;·&nbsp; bbradar.io</span>
-    <div class="footer-right">
-      <a href="https://github.com/chronos/bbradar-monitor" target="_blank">chronos / bbradar-monitor</a>
-    </div>
+    <span>Atualiza automaticamente a cada 60s &nbsp;·&nbsp; Dados de <a href="https://bbradar.io" target="_blank">bbradar.io</a></span>
+    <a href="https://github.com/chronos/bbradar-monitor" target="_blank">chronos / bbradar-monitor</a>
   </footer>
 
 </div>
 
 <script>
-  // Lê state.json gerado pelo GitHub Actions e popula a página
-  const PLAT_EMOJI = {
-    'hackerone':'🟢','bugcrowd':'🟠','intigriti':'🟣','yeswehack':'🟡',
-    'immunefi':'🔵','code4rena':'🔴','hackenproof':'🩵','cantina':'🟤',
-    'compass security':'🟩','standoff365':'🔴','default':'⚪'
-  };
-  function platEmoji(p){ return PLAT_EMOJI[p.toLowerCase()] || PLAT_EMOJI.default; }
+const PLAT_EMOJI = {
+  hackerone:'🟢',bugcrowd:'🟠',intigriti:'🟣',yeswehack:'🟡',
+  immunefi:'🔵','code4rena':'🔴',hackenproof:'🩵',cantina:'🟤',
+  'compass security':'🟩',certik:'⬜',immunefi:'🔵',default:'⚪'
+};
+const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
-  async function loadData(){
-    try {
-      const r = await fetch('state.json?t=' + Date.now());
-      if(!r.ok) throw new Error('HTTP '+r.status);
-      const s = await r.json();
+let allPrograms  = [];
+let activeFilter = 'all';
 
-      // Stats
-      document.getElementById('stat-new').textContent   = (s.last_new ?? 0);
-      document.getElementById('stat-total').textContent = (s.total ?? 0).toLocaleString();
-      document.getElementById('stat-runs').textContent  = (s.runs  ?? 0);
+function platEmoji(p){ return PLAT_EMOJI[p.toLowerCase()]||PLAT_EMOJI.default; }
 
-      if(s.last_check){
-        const d = new Date(s.last_check + 'Z');
-        document.getElementById('stat-date').textContent =
-          d.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',
-                                    hour:'2-digit',minute:'2-digit'}) + ' UTC';
-      }
+function fmtDate(iso){
+  if(!iso) return {day:'—',month:'—'};
+  try{
+    const d = new Date(iso+'T00:00:00Z');
+    return { day: d.getUTCDate(), month: MONTHS[d.getUTCMonth()] };
+  } catch{ return {day:'—',month:'—'}; }
+}
 
-      // Programas novos
-      const progs = s.last_new_programs || [];
-      const badge = document.getElementById('prog-count');
-      badge.textContent = progs.length + ' programa' + (progs.length===1?'':'s');
-      if(progs.length > 0) badge.className = 'badge new';
+function isNew(dateStr){
+  if(!dateStr) return false;
+  const d     = new Date(dateStr+'T00:00:00Z');
+  const diff  = (Date.now() - d.getTime()) / 86400000;
+  return diff <= 7;
+}
 
-      const container = document.getElementById('prog-container');
-      if(progs.length === 0){
-        container.innerHTML = `<div class="empty">
-          <div class="big">◌</div>
-          <p>Nenhum programa novo nesta execução.<br>Tudo em dia.</p>
-        </div>`;
-      } else {
-        const rows = progs.map(p => {
-          const tags = (p.scope_tags||[]).slice(0,4).map(t =>
-            `<span class="scope-tag">${t}</span>`).join('');
-          return `<tr>
-            <td class="program-name"><a href="${p.link||'#'}" target="_blank">${p.name}</a></td>
-            <td><span class="plat-chip">${platEmoji(p.platform)} ${p.platform}</span></td>
-            <td class="date-val">${p.date_display||'—'}</td>
-            <td class="bounty-val">${p.bounty_str||'—'}</td>
-            <td>${tags||'<span class="date-val">—</span>'}</td>
-          </tr>`;
-        }).join('');
-        container.innerHTML = `<div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Programa</th><th>Plataforma</th><th>Data</th><th>Bounty</th><th>Scope</th>
-            </tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
-        </div>`;
-      }
+function buildCard(p){
+  const {day,month} = fmtDate(p.date_launched);
+  const score = (p.net_score||0);
+  const tags  = (p.scope_tags||[]).slice(0,4);
+  const more  = (p.scope_tags||[]).length - 4;
+  const tagHtml = tags.map(t=>`<span class="scope-chip">${t}</span>`).join('') +
+    (more>0 ? `<span class="more-chip">+${more}</span>` : '');
+  const em     = platEmoji(p.platform||'');
+  const newBadge = isNew(p.date_launched) ? '<span class="badge-new">New</span>' : '';
+  const bounty = p.bounty_str && p.bounty_str!=='VDP'
+    ? `<div class="bounty-amt">${p.bounty_str}</div>`
+    : `<div class="bounty-vdp">VDP</div>`;
+  const logoHtml = p.profile_pic
+    ? `<img src="${p.profile_pic}" alt="${p.name}" onerror="this.parentNode.innerHTML='${em}'">`
+    : em;
+  return `
+  <div class="program-card ${isNew(p.date_launched)?'is-new':''}" onclick="window.open('${p.link||'#'}','_blank')">
+    <div class="col-date">
+      <div class="date-day">${day}</div>
+      <div class="date-month">${month}</div>
+    </div>
+    <div class="col-vote">
+      <div class="vote-btn">▲</div>
+      <div class="vote-count">${score}</div>
+      <div class="vote-btn">▼</div>
+    </div>
+    <div class="col-logo">
+      <div class="logo-circle">${logoHtml}</div>
+    </div>
+    <div class="col-info">
+      <div class="prog-name-row">
+        <span class="prog-name">${p.name}</span>
+        ${newBadge}
+      </div>
+      <div class="prog-plat">${p.platform}</div>
+    </div>
+    <div class="col-tags">${tagHtml}</div>
+    <div class="col-bounty">${bounty}</div>
+    <div class="col-action">
+      <span class="btn-details">Details</span>
+    </div>
+  </div>`;
+}
 
-    } catch(e) {
-      // state.json ainda não existe — aguardando primeira execução
-      console.log('state.json não disponível ainda:', e.message);
-    }
+function renderPrograms(progs){
+  const list = document.getElementById('programs-list');
+  if(!progs||progs.length===0){
+    list.innerHTML = `<div class="empty-state">
+      <div class="icon">✓</div>
+      <p>Nenhum programa novo nesta execução.<br>
+      <span style="color:var(--muted);font-size:12px">Você será notificado assim que algo aparecer.</span></p>
+    </div>`;
+    return;
   }
+  let filtered = progs;
+  if(activeFilter!=='all'){
+    filtered = progs.filter(p=>{
+      const hay = ((p.scope_tags||[]).join(' ')+' '+(p.scope_type||'')).toLowerCase();
+      return hay.includes(activeFilter);
+    });
+  }
+  document.getElementById('prog-count').textContent = filtered.length;
+  list.innerHTML = filtered.map(buildCard).join('');
+}
 
-  loadData();
-  setInterval(loadData, 60000);
+function setTab(btn, filter){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  activeFilter = filter;
+  renderPrograms(allPrograms);
+}
+
+async function loadState(){
+  try{
+    const r = await fetch('state.json?t='+Date.now());
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const s = await r.json();
+
+    document.getElementById('s-new').textContent   = s.last_new ?? 0;
+    document.getElementById('s-total').textContent = (s.total||0).toLocaleString('pt-BR');
+    document.getElementById('s-runs').textContent  = s.runs ?? 0;
+
+    if(s.last_check){
+      const d = new Date(s.last_check);
+      document.getElementById('s-date').textContent =
+        d.toLocaleDateString('pt-BR')+'  '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    }
+
+    allPrograms = s.last_new_programs || [];
+    document.getElementById('prog-count').textContent = allPrograms.length;
+    renderPrograms(allPrograms);
+
+  } catch(e){
+    console.log('state.json:', e.message);
+    document.getElementById('programs-list').innerHTML = `<div class="empty-state">
+      <div class="loading"></div>
+      <p>Aguardando primeira execução do GitHub Actions...</p>
+    </div>`;
+  }
+}
+
+loadState();
+setInterval(loadState, 60000);
 </script>
 </body>
 </html>
