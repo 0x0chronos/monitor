@@ -258,7 +258,9 @@ def load_state() -> dict:
     return {"seen_ids": [], "last_check": None, "total": 0, "runs": 0}
 
 def save_state(s: dict):
-    STATE_FILE.write_text(json.dumps(s, indent=2, ensure_ascii=False))
+    # Remove _raw para não inflar o arquivo
+    clean = {k: v for k, v in s.items() if k != '_raw'}
+    STATE_FILE.write_text(json.dumps(clean, indent=2, ensure_ascii=False))
 
 
 # ───────────────────────────────────────────────────────────────
@@ -385,121 +387,6 @@ def notify_all(programs: list):
         print("⚠️  Erros nas notificações:", " | ".join(errors))
 
 
-# ───────────────────────────────────────────────────────────────
-#  STATUS PAGE (index.html — servido pelo GitHub Pages)
-# ───────────────────────────────────────────────────────────────
-def update_status_page(state: dict, new_programs: list, total_fetched: int):
-    now_utc = datetime.utcnow().strftime("%d/%m/%Y %H:%M UTC")
-    runs    = state.get("runs", 0)
-    total   = state.get("total", 0)
-
-    new_rows = ""
-    if new_programs:
-        for p in new_programs[:20]:
-            tags = ", ".join(p["scope_tags"][:4]) or p["scope_type"] or "—"
-            new_rows += f"""
-            <tr class="new-row">
-              <td><a href="{p['link']}" target="_blank">{p['name']}</a></td>
-              <td>{p['platform']}</td>
-              <td>{p['date_display']}</td>
-              <td>{p['bounty_str']}</td>
-              <td>{tags}</td>
-            </tr>"""
-
-    new_section = f"""
-    <div class="card alert">
-      <h2>🎯 {len(new_programs)} Novo(s) Programa(s) Detectado(s)</h2>
-      <table>
-        <thead><tr>
-          <th>Nome</th><th>Plataforma</th><th>Data</th><th>Bounty</th><th>Scope</th>
-        </tr></thead>
-        <tbody>{new_rows}</tbody>
-      </table>
-    </div>""" if new_programs else ""
-
-    html = f"""<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="900">
-  <title>BBRadar Monitor</title>
-  <style>
-    * {{ box-sizing: border-box; margin: 0; padding: 0; }}
-    body {{ font-family: 'Segoe UI', system-ui, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; padding: 24px; }}
-    h1 {{ font-size: 1.8rem; margin-bottom: 4px; }}
-    h1 span {{ color: #58a6ff; }}
-    .sub {{ color: #8b949e; font-size: 0.9rem; margin-bottom: 24px; }}
-    .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(180px,1fr)); gap: 16px; margin-bottom: 24px; }}
-    .stat {{ background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 16px; text-align: center; }}
-    .stat .num {{ font-size: 2rem; font-weight: 700; color: #58a6ff; }}
-    .stat .label {{ font-size: 0.8rem; color: #8b949e; margin-top: 4px; }}
-    .card {{ background: #161b22; border: 1px solid #30363d; border-radius: 10px; padding: 20px; margin-bottom: 20px; }}
-    .card h2 {{ margin-bottom: 16px; font-size: 1.1rem; }}
-    .alert {{ border-color: #f78166; }}
-    .alert h2 {{ color: #f78166; }}
-    table {{ width: 100%; border-collapse: collapse; font-size: 0.88rem; }}
-    th {{ color: #8b949e; text-align: left; padding: 8px 10px; border-bottom: 1px solid #30363d; font-weight: 600; }}
-    td {{ padding: 8px 10px; border-bottom: 1px solid #21262d; vertical-align: top; }}
-    tr:last-child td {{ border-bottom: none; }}
-    .new-row td:first-child {{ font-weight: 600; }}
-    a {{ color: #58a6ff; text-decoration: none; }}
-    a:hover {{ text-decoration: underline; }}
-    .badge {{ display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem;
-              background: #1f6feb33; color: #58a6ff; border: 1px solid #1f6feb; }}
-    .ok {{ color: #3fb950; }}
-    .footer {{ text-align: center; color: #8b949e; font-size: 0.8rem; margin-top: 32px; }}
-  </style>
-</head>
-<body>
-  <h1>🎯 BBRadar <span>Monitor</span></h1>
-  <p class="sub">Atualiza automaticamente a cada 15 minutos via GitHub Actions</p>
-
-  <div class="grid">
-    <div class="stat">
-      <div class="num">{total}</div>
-      <div class="label">Programas Catalogados</div>
-    </div>
-    <div class="stat">
-      <div class="num ok">{len(new_programs)}</div>
-      <div class="label">Novos nesta Rodada</div>
-    </div>
-    <div class="stat">
-      <div class="num">{runs}</div>
-      <div class="label">Checagens Realizadas</div>
-    </div>
-    <div class="stat">
-      <div class="num" style="font-size:1.1rem">{now_utc}</div>
-      <div class="label">Última Checagem</div>
-    </div>
-  </div>
-
-  {new_section}
-
-  <div class="card">
-    <h2>📡 Status das Notificações</h2>
-    <table>
-      <thead><tr><th>Canal</th><th>Status</th></tr></thead>
-      <tbody>
-        <tr><td>Discord</td><td class="ok">✅ Configurado</td></tr>
-        <tr><td>Telegram</td><td class="ok">✅ Configurado</td></tr>
-        <tr><td>WhatsApp</td><td>{"✅ Configurado" if CALLMEBOT_PHONE else "⚠️ CALLMEBOT_PHONE não definido"}</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="footer">
-    BBRadar Monitor • Cronos 0x0 • Powered by GitHub Actions
-  </div>
-</body>
-</html>"""
-    Path("index.html").write_text(html, encoding="utf-8")
-    print(f"  [status] index.html atualizado")
-
-
-# ───────────────────────────────────────────────────────────────
-#  MAIN
-# ───────────────────────────────────────────────────────────────
 def main():
     print(f"\n{'='*55}")
     print(f"  BBRadar Monitor — {datetime.utcnow().strftime('%d/%m/%Y %H:%M UTC')}")
@@ -528,7 +415,6 @@ def main():
         state["runs"] = state.get("runs",0) + 1
         state["last_check"] = datetime.utcnow().isoformat()
         save_state(state)
-        update_status_page(state, [], 0)
         sys.exit(1)
 
     # Detectar novos
@@ -559,7 +445,13 @@ def main():
     else:
         print("\n✅ Nenhum programa novo nesta checagem.")
 
-    update_status_page(state, new_progs, len(raw_programs))
+    # Salva programas novos no state para o index.html ler via JS
+    state["last_new"]          = len(new_progs)
+    state["last_new_programs"] = [
+        {k: v for k, v in p.items() if k not in ("id","handle","profile_pic")}
+        for p in new_progs[:20]
+    ]
+    save_state(state)
     print(f"\n{'='*55}\n")
 
 
