@@ -17,6 +17,9 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Sync state do remote
+        run: git pull origin main || true
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -37,6 +40,5 @@ jobs:
             echo "Sem mudanças."
           else
             git commit -m "chore: update state [skip ci]"
-            git pull --rebase origin main
             git push
           fi
