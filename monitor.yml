@@ -34,7 +34,7 @@ jobs:
           git config user.email "bbradar-bot@noreply"
           git add state.json
           if git diff --staged --quiet; then
-            echo "state.json sem mudanças."
+            echo "Sem mudanças."
           else
             git commit -m "chore: update state [skip ci]"
             git push
